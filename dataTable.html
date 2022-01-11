@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@3.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+</head>
+
+<body>
+  <div id='app'>
+    <v-app>
+      <v-container grid-list-xs>
+        <v-layout wrap justify-center>
+          <v-flex md12>
+            <v-text-field label="Search..." clearable v-model="search" outlined prepend-inner-icon="search">
+            </v-text-field>
+          </v-flex>
+          <v-flex md12>
+            <v-data-table :headers="handers" hide-default-footer :items='kind' class="elevation-1" :page.sync="page"
+              :items-per-page="5" :search="search" :sort-by="['price']" multi-sort @page-count="pageCount = $event">
+
+              <template v-slot:top>
+                <v-dialog v-model="dialog" width="500" persistent>
+                  <template v-slot:activator="{ on }">
+                    <v-btn icon v-on="on">
+                      <v-icon>add_circle_outline</v-icon>
+                    </v-btn>
+                  </template>
+                  <v-card>
+                    <v-card-title>Add new recommended books</v-card-title>
+                    <v-card-text>
+                      <v-container grid-list-sm>
+                        <v-layout wrap>
+                          <v-flex md4>
+                            <v-text-field v-model="defaultItem.name" label="Books name" clearable></v-text-field>
+                          </v-flex>
+                          <v-flex md4>
+                            <v-text-field v-model="defaultItem.price" label="NT$"></v-text-field>
+                          </v-flex>
+                          <v-flex md4>
+                            <v-text-field v-model="defaultItem.date" label="Books date"></v-text-field>
+                          </v-flex>
+                          <v-flex md4>
+                            <v-text-field v-model="defaultItem.author" label="Author"></v-text-field>
+                          </v-flex>
+                          <v-flex md4>
+                            <v-text-field v-model="defaultItem.lanuage" label="Lanuage"></v-text-field>
+                          </v-flex>
+                        </v-layout>
+                      </v-container>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn small text @click="addvalue()">OK</v-btn>
+                      <v-btn small text @click="dialog=false">Cancel</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+              </template>
+
+
+
+              <template v-slot:item.edit="{item}">
+
+                <v-dialog v-model="editdialog" width="500">
+                  <template v-slot:activator="{ on }">
+                    <v-btn icon v-on="on">
+                      <v-icon small text>create</v-icon>
+                    </v-btn>
+                  </template>
+
+                  <v-card>
+                    <v-card-title>Editvalue</v-card-title>
+                    <v-card-text>
+                      <v-container grid-list-sm>
+                        <v-layout wrap>
+                          <v-flex md4>
+                            <v-text-field v-model="editItem.name" label="Books name" clearable></v-text-field>
+                          </v-flex>
+                          <v-flex md4>
+                            <v-text-field v-model=" editItem.price" label="NT$"></v-text-field>
+                          </v-flex>
+                          <v-flex md4>
+                            <v-text-field v-model=" editItem.date" label="Books date"></v-text-field>
+                          </v-flex>
+                          <v-flex md4>
+                            <v-text-field v-model="editItem.author" label="Author"></v-text-field>
+                          </v-flex>
+                          <v-flex md4>
+                            <v-text-field v-model=" editItem.lanuage" label="Lanuage"></v-text-field>
+                          </v-flex>
+                        </v-layout>
+                      </v-container>
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-spacer></v-spacer>
+                      <v-btn small text @click="edit(index)">OK</v-btn>
+                      <v-btn small text @click="editdialog=false">Cancel</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+              </template>
+
+              <template v-slot:item.action='{item}'>
+                <v-btn icon x-small @click="deletevalue(item)">
+                  <v-btn @click="snackbar=true" text x-small fab>
+                    <v-icon>delete_forever</v-icon>
+                  </v-btn>
+                </v-btn>
+                <v-snackbar v-model="snackbar">
+                  {{text}}
+                  <v-btn color="red" text @click="snackbar=false">OK</v-btn>
+                </v-snackbar>
+              </template>
+            </v-data-table>
+            <v-pagination v-model="page" :length="pageCount" circle></v-pagination>
+          </v-flex>
+        </v-layout>
+      </v-container>
+    </v-app>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      vuetify: new Vuetify(),
+      data: function () {
+        return ({
+          index: '',
+          editdialog: false,
+          dialog: false,
+          search: '',
+          snackbar: false,
+          text: '已刪除',
+          page: 1,
+          pageCount: 0,
+
+
+          handers: [{
+            text: 'Books',
+            align: 'left',
+            value: 'name',
+          },
+          {
+            text: "Price",
+            value: 'price'
+          },
+          {
+            text: "Date",
+            value: 'date'
+          },
+          {
+            text: 'Author',
+            value: 'author'
+          },
+          {
+            text: "Lanuage",
+            value: 'lanuage'
+          },
+          {
+            text: "Action",
+            value: "action"
+          },
+          {
+            text: "Edit",
+            value: "edit"
+          }
+          ],
+          kind: [],
+          defaultItem: {
+            name: "",
+            price: 0,
+            date: "2019-08-02",
+            author: "Peter",
+            lanuage: "chinese"
+          },
+          editItem: {
+            name: "",
+            price: 0,
+            date: "2019-08-05",
+            author: "Peter",
+            lanuage: "chinese"
+          },
+        })
+      },
+
+      created() {
+        this.kinddata()
+      },
+      methods: {
+        kinddata() {
+          this.kind = [{
+            name: 'CEH Certified Ethical Hacker Practice Exams',
+            price: 1400,
+            date: '2019-06-21',
+            author: 'McGraw-Hill Education',
+            lanuage: 'english'
+          },
+
+          {
+            name: 'JS',
+            price: 500,
+            date: '2018-03-21',
+            author: 'Apress',
+            lanuage: 'chinese'
+          },
+
+          {
+            name: 'Vue',
+            price: 600,
+            date: '2006-05-04',
+            author: 'Education',
+            lanuage: 'english'
+          },
+
+          {
+            name: 'Vuetify',
+            price: 700,
+            date: '2019-06-21',
+            author: 'McGraw-Hill Education',
+            lanuage: 'english'
+          },
+
+
+          {
+            name: 'Laszlo in Action ',
+            price: 1800,
+            date: '1995-11-12',
+            author: 'Norman Klein',
+            lanuage: 'english'
+          },
+
+          {
+            name: 'Robot Builders Sourcebook (Paperback)',
+            price: 740,
+            date: '1997-05-04',
+            author: 'Gordon McComb',
+            lanuage: 'english'
+          },
+
+          {
+            name: 'Oracle CRM On Demand Combined Analyses',
+            price: 650,
+            date: '1997-05-18',
+            author: 'D. Lairson',
+            lanuage: 'english'
+          },
+
+          {
+            name: 'Swift Pocket Reference',
+            price: 890,
+            date: '2017-03-18',
+            author: 'OReilly Media',
+            lanuage: 'english'
+          },
+
+          {
+            name: 'Beginning Programming with Java For Dummies',
+            price: 870,
+            date: '2017-04-01',
+            author: 'Barry A. Burd',
+            lanuage: 'english'
+          }
+
+          ]
+        },
+        deletevalue(item) {
+          var number = this.kind.indexOf(item)
+          this.kind.splice(number, 1)
+        },
+        addvalue() {
+          this.kind.push({
+            name: this.defaultItem.name,
+            price: this.defaultItem.price,
+            date: this.defaultItem.date,
+            author: this.defaultItem.author,
+            lanuage: this.defaultItem.lanuage
+          })
+          this.dialog = false
+        },
+        //showDialog(item) {
+        // console.log('jjjj', item)
+        //this.index = index
+
+        //},
+        edit(index) {
+          //console.log(this.index)
+          name[this.index] = this.editItem.name,
+            price[this.index] = this.editItem.price,
+            date[this.index] = this.edittItem.date,
+            author[this.index] = this.edittItem.author,
+            lanuage[this.index] = this.edittItem.lanuage,
+            this.editdialog = false
+
+        }
+
+      }
+
+    })
+
+  </script>
+</body>
+
+</html>
